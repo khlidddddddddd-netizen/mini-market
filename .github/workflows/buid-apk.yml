@@ -20,6 +20,7 @@ jobs:
       - name: Siapkan proyek Capacitor
         run: |
           mkdir -p www && cp Mart2.html www/index.html
+          sed -i 's/signInWithGoogle()/signInWithGoogle({useCredentialManager:false})/' www/index.html
           cat > package.json <<'JSON'
           {"name":"mini-market","version":"1.0.0","private":true,"dependencies":{"@capacitor/core":"^7.0.0","@capacitor/android":"^7.0.0","@capacitor/cli":"^7.0.0","@capacitor-firebase/authentication":"^7.0.0","firebase":"^11.0.0"}}
           JSON
@@ -36,6 +37,9 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+      - name: Cek tanda tangan APK
+        run: |
+          keytool -printcert -jarfile android/app/build/outputs/apk/debug/app-debug.apk | grep -E "Owner|SHA1" || true
       - uses: actions/upload-artifact@v4
         with:
           name: MiniMarket-APK
