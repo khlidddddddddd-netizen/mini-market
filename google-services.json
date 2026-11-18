@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "524619485069",
+    "project_id": "mini-market-bakha",
+    "storage_bucket": "mini-market-bakha.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:524619485069:android:e42bf73692dee2d06bf7c4",
+        "android_client_info": {
+          "package_name": "com.bakha.minimarket"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "524619485069-odj07f0ae0fvu9a2di3rht1a8lu3tagu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bakha.minimarket",
+            "certificate_hash": "d80a1ee0015de68b2657942a06165f21287b128e"
+          }
+        },
+        {
+          "client_id": "524619485069-kqftce5a85ovpr9r8cdnnu8irp3ldj1n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6N4kVRJjP_rTH5uyjWXPHanU4JguiUjM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "524619485069-kqftce5a85ovpr9r8cdnnu8irp3ldj1n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
