@@ -271,7 +271,7 @@ function upd(dt){tm+=dt;
 if(G.open){G.clock+=dt*3;if(G.clock>=1200)endDay(1)}
 for(const k in G.ads){G.ads[k]-=dt;if(G.ads[k]<=0)delete G.ads[k]}
 if(G.sale>0){G.sale-=dt;if(G.sale<=0){G.sale=0;toast('Acara diskon besar selesai')}}
-if(G.open){spT-=dt;if(spT<=0){spT=(4+Math.random()*3)/attr();if(cs.length<8+3*G.lv)spawn()}}
+if(G.open){spT-=dt;if(spT<=0){spT=(4+Math.random()*3)/(attr()*(window.EVM||1));if(cs.length<8+3*G.lv)spawn()}}
 cs.forEach(c=>{c.ph+=dt*14*(c.mv?1:0);
 if(c.st=='car'){if(c.car.park){c.hid=0;c.st='in';c.x=c.car.x+.7;c.y=c.car.y;c.path=[[c.x,GD+1.15],[1.35,GD+1.15],[1.35,GD+.15]]}else{c.x=c.car.x;c.y=c.car.y}}
 else if(c.st=='in'){const p=c.path&&c.path[0];if(p){if(go(c,p[0],p[1],dt))c.path.shift()}else{const d=DOOR();if(go(c,d[0],d[1],dt))decide(c)}}
@@ -687,6 +687,7 @@ const em=e=>ERR[e.code]||e.message||String(e);
 const st=document.createElement('style');st.textContent=`.mo_w{position:fixed;inset:0;z-index:9998;background:#0b1d2aee;display:flex;align-items:center;justify-content:center;font:14px system-ui,sans-serif;color:#fff;overflow:auto}.mo_c{background:#16324a;border-radius:14px;padding:16px;width:min(94vw,430px);max-height:92vh;overflow:auto;box-sizing:border-box}.mo_c h2,.mo_c h3{margin:0 0 10px}.mo_c input{width:100%;box-sizing:border-box;padding:10px;margin:4px 0;border-radius:8px;border:0;font-size:15px}.mo_b{padding:10px 12px;border:0;border-radius:8px;background:#2d5a7b;color:#fff;font-size:14px;margin:3px 0}.mo_p{background:#f4a259;color:#222;font-weight:700}.mo_g{background:#2a9d8f}.mo_d{background:#c1121f}.mo_f{width:100%;display:block}.mo_r{display:flex;gap:6px;flex-wrap:wrap}.mo_r>*{flex:1}.mo_s{font-size:12px;opacity:.8}.mo_i{background:#1e4463;border-radius:10px;padding:8px;margin:5px 0}.mo_t button{flex:1}.mo_t button.on{background:#f4a259;color:#222}#mo_bd{position:fixed;left:6px;bottom:6px;z-index:9000;background:#000a;color:#fff;font:11px system-ui;padding:4px 8px;border-radius:12px;display:none}#mo_bd button{font-size:11px;margin-left:4px;padding:2px 7px;border:0;border-radius:8px}.mo_k{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}#mo_sp{position:fixed;inset:0;z-index:9990}#mo_sb{position:fixed;left:0;right:0;top:0;z-index:9995;background:#7b2cbf;color:#fff;font:12px system-ui;padding:6px;display:flex;gap:6px;align-items:center}#mo_sb span{flex:1}#mo_sb button{padding:5px 8px;border:0;border-radius:8px}`;document.head.appendChild(st);
 const el=(h,c)=>{const d=document.createElement('div');if(c)d.className=c;d.innerHTML=h;document.body.appendChild(d);return d};
 
+window._mo=()=>({X,me,prof,mode:MODE,cache});
 /* ---- Hook penyimpanan: offline=localStorage, online=Firestore ---- */
 const _save=save,_load=loadG,_reset=resetAll;
 save=function(q){if(MODE=='off')return _save(q);if(MODE=='on'){dirty=true;if(!q)mmT='Tersimpan online';push(!q);return 1}return 0};
@@ -702,7 +703,7 @@ async function push(force){
  pushing=true;lastPush=now;dirty=false;const{fs,db}=X,ref=fs.doc(db,'saves',me.uid);
  try{const data=JSON.stringify(snap()),sm=summary();
   const r=await fs.runTransaction(db,async tx=>{const s=await tx.get(ref),d=s.exists()?s.data():null;if(d&&d.by=='admin'&&d.rev>rev)return{adm:d};tx.set(ref,{data,money:Math.max(0,Math.floor(sm.money)),lv:Math.round(sm.level),rev:rev+1,by:'player',updatedAt:fs.serverTimestamp()});return{}});
-  if(r.adm)remote(r.adm);else{rev++;cache={data,rev};await fs.updateDoc(fs.doc(db,'users',me.uid),Object.assign(sm,{lastSeen:fs.serverTimestamp(),online:true}))}
+  if(r.adm)remote(r.adm);else{rev++;cache={data,rev,money:Math.max(0,Math.floor(sm.money)),lv:Math.round(sm.level)};await fs.updateDoc(fs.doc(db,'users',me.uid),Object.assign(sm,{lastSeen:fs.serverTimestamp(),online:true}))}
   lastOk=Date.now()}catch(e){if(e.code=='permission-denied')await rollback();else dirty=true}
  pushing=false;badge()}
 function clamp(d){if(d&&typeof d.money=='number'&&!(prof&&prof.infinity)&&G.M>d.money+1)G.M=d.money}
@@ -718,7 +719,7 @@ async function init(){if(X)return X;if(FB.apiKey.indexOf('ISI')==0)throw Error('
 let gate;
 function gmsg(t){const e=$$('mo_gm');if(e)e.textContent=t||''}
 function showGate(note){if(gate)gate.remove();const u=X&&X.auth.currentUser;
- gate=el(`<div class="mo_c"><h2>Mini Market</h2><button class="mo_b mo_f mo_g" id="mo_off">Main Offline (tanpa internet)</button><div class="mo_s">Data disimpan di perangkat ini, terpisah dari data online.</div><hr style="opacity:.2;margin:12px 0"><h3>Main Online (v5)</h3><div id="mo_on"></div><div id="mo_gm" class="mo_s" style="color:#ffb4b4;margin-top:6px">${esc(note||'')}</div></div>`,'mo_w');
+ gate=el(`<div class="mo_c"><h2>Mini Market</h2><button class="mo_b mo_f mo_g" id="mo_off">Main Offline (tanpa internet)</button><div class="mo_s">Data disimpan di perangkat ini, terpisah dari data online.</div><hr style="opacity:.2;margin:12px 0"><h3>Main Online (v6)</h3><div id="mo_on"></div><div id="mo_gm" class="mo_s" style="color:#ffb4b4;margin-top:6px">${esc(note||'')}</div></div>`,'mo_w');
  $$('mo_off').onclick=()=>{MODE='off';gate.remove();gate=null;toast('Mode Offline')};
  const on=$$('mo_on');
  if(u){on.innerHTML=`<button class="mo_b mo_f mo_p" id="mo_go">Lanjut online: ${esc(u.displayName||u.email||'akun')}</button><button class="mo_b mo_f" id="mo_lo">Ganti akun</button>`;$$('mo_go').onclick=startOnline;$$('mo_lo').onclick=async()=>{await X.au.signOut(X.auth);showGate()}}
@@ -808,6 +809,60 @@ async function spectate(uid,u){const{fs,db}=X;await push(true);ownSnap=JSON.stri
 /* ---- Mulai ---- */
 showGate();
 init().then(()=>{X.au.onAuthStateChanged(X.auth,()=>{if(gate&&MODE==null)showGate()})}).catch(()=>{});
+})();
+
+/* ===== FITUR: event harian, pencapaian, peringkat online, buka toko otomatis ===== */
+(function(){
+const $$=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const spec=()=>!!$$('mo_sp'),mode=()=>window._mo?window._mo().mode:null;
+const EV=[{id:'normal',n:'Hari biasa',m:1,w:.4},{id:'ramai',n:'Hari ramai: pelanggan +50%',m:1.5,w:.2},{id:'hujan',n:'Hujan deras: pelanggan -30%',m:.7,w:.15},{id:'festival',n:'Festival lingkungan: pelanggan +100%',m:2,w:.1},{id:'bonus',n:'Bonus kas dari pemasok',m:1,w:.15,cash:1}];
+const evOf=id=>EV.find(e=>e.id==id)||EV[0];
+window.EVM=1;
+function evTick(){if(spec())return;const m=mode();if(m!='on'&&m!='off')return;
+ if(!G.ev||G.ev.d!=G.day){let r=Math.random(),x=EV[0];for(const e of EV){if(r<e.w){x=e;break}r-=e.w}
+  G.ev={d:G.day,id:x.id};
+  if(x.cash){const c=[25000,75000,250000,1000000][G.lv]||25000;G.M+=c;toast('Event: bonus kas dari pemasok +'+fm(c))}else toast('Event hari ini: '+x.n);
+  save(1)}
+ window.EVM=evOf(G.ev.id).m}
+const AC=[
+{id:'s1',n:'Pelanggan pertama',t:1,r:10000,c:()=>G.st.served},
+{id:'s2',n:'Mulai ramai (100 pelanggan)',t:100,r:50000,c:()=>G.st.served},
+{id:'s3',n:'Langganan setia (500 pelanggan)',t:500,r:200000,c:()=>G.st.served},
+{id:'s4',n:'Legenda toko (2.000 pelanggan)',t:2000,r:800000,c:()=>G.st.served},
+{id:'d1',n:'Bertahan 7 hari',t:7,r:50000,c:()=>G.day},
+{id:'d2',n:'Bertahan 30 hari',t:30,r:300000,c:()=>G.day},
+{id:'l1',n:'Naik jadi Supermarket',t:1,r:250000,c:()=>G.lv},
+{id:'l2',n:'Naik jadi Department Store',t:2,r:750000,c:()=>G.lv},
+{id:'l3',n:'Naik jadi Hypermarket',t:3,r:2500000,c:()=>G.lv},
+{id:'o1',n:'Omzet sehari Rp 1 juta',t:1e6,r:100000,c:()=>G.st.best},
+{id:'o2',n:'Omzet sehari Rp 10 juta',t:1e7,r:500000,c:()=>G.st.best}];
+function acTick(){if(spec())return;const m=mode();if(m!='on'&&m!='off')return;G.ach=G.ach||{};let got=0;
+ for(const a of AC){if(!G.ach[a.id]&&a.c()>=a.t){G.ach[a.id]=1;G.M+=a.r;got+=a.r;toast('Pencapaian: '+a.n+' (+'+fm(a.r)+')')}}
+ if(got)save(1)}
+let hold=false,pO=0,pC=0;
+function autoTick(){if(spec())return;const m=mode();if(m!='on'&&m!='off')return;
+ if(pO&&!G.open&&pC<1180)hold=true;if(G.open)hold=false;pO=G.open;pC=G.clock;
+ if(G.auto&&!G.open&&!hold&&!(typeof mo!=='undefined'&&mo)){openShop();hud()}}
+setInterval(()=>{try{evTick();acTick();autoTick()}catch(e){}},1000);
+/* Peringkat: tulis ringkasan publik (nilainya dibatasi Rules agar tidak melebihi data tersimpan) */
+function boardPush(){try{const o=window._mo();if(o.mode!='on'||!o.cache||o.cache.money==null||o.cache.lv==null||(o.prof&&o.prof.infinity))return;
+ const{fs,db}=o.X;fs.setDoc(fs.doc(db,'board',o.me.uid),{name:String(o.prof.username||'Pemain').slice(0,30),shop:String(G.name||'').slice(0,30),money:o.cache.money,lv:o.cache.lv,lvName:PHN[o.cache.lv],updatedAt:fs.serverTimestamp()}).catch(()=>{})}catch(e){}}
+setInterval(boardPush,60000);setTimeout(boardPush,20000);
+/* UI */
+let pn,ti=0;
+const bt=document.createElement('button');bt.textContent='Fitur';bt.style.cssText='position:fixed;right:6px;bottom:6px;z-index:8999;padding:6px 12px;border:0;border-radius:14px;background:#000a;color:#fff;font:12px system-ui';document.body.appendChild(bt);
+bt.onclick=()=>{if(pn)pn.remove();pn=document.createElement('div');pn.className='mo_w';pn.style.zIndex=9997;pn.innerHTML='<div class="mo_c"><div class="mo_r mo_t" id="mf_t"></div><div id="mf_b"></div></div>';document.body.appendChild(pn);tab(ti)};
+function tab(n){ti=n;$$('mf_t').innerHTML=['Peringkat','Pencapaian','Otomatis'].map((x,i)=>`<button class="mo_b ${i==n?'on':''}" data-i="${i}">${x}</button>`).join('')+'<button class="mo_b mo_d" id="mf_x" style="flex:.4">X</button>';
+ $$('mf_t').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>tab(+b.dataset.i));$$('mf_x').onclick=()=>{pn.remove();pn=null};
+ const b=$$('mf_b');
+ if(n==0){const o=window._mo();if(o.mode!='on'){b.innerHTML='<div class="mo_i">Peringkat hanya tersedia di mode Online.</div>';return}
+  b.innerHTML='<div class="mo_s">Memuat...</div>';const{fs,db}=o.X;
+  fs.getDocs(fs.query(fs.collection(db,'board'),fs.orderBy('money','desc'),fs.limit(20))).then(s=>{
+   b.innerHTML='<div class="mo_s">Peringkat berdasarkan uang (kekayaan). Diperbarui sekitar tiap 1 menit.</div>'+(s.docs.map((d,i)=>{const v=d.data(),me=d.id==o.me.uid;return`<div class="mo_i" ${me?'style="outline:2px solid #f4a259"':''}><b>${i+1}. ${esc(v.name)}</b>${me?' (kamu)':''}<div class="mo_s">${esc(v.shop)} · ${esc(v.lvName)} · ${fm(v.money)}</div></div>`}).join('')||'<div class="mo_i">Belum ada data.</div>')}).catch(e=>{b.innerHTML='<div class="mo_i">Gagal memuat: '+esc(e.code||e.message)+'</div>'})}
+ else if(n==1){G.ach=G.ach||{};b.innerHTML=AC.map(a=>{const c=Math.min(a.c(),a.t),d=!!G.ach[a.id];return`<div class="mo_i" ${d?'style="opacity:.6"':''}><b>${esc(a.n)}</b> ${d?'(selesai)':''}<div class="mo_s">${d?'':fm(c)+' / '+fm(a.t)+' · '}Hadiah ${fm(a.r)}</div></div>`}).join('')}
+ else{b.innerHTML=`<div class="mo_i"><b>Event hari ini</b><div class="mo_s">${esc(evOf(G.ev&&G.ev.id).n)}</div></div><div class="mo_i"><label><input type="checkbox" id="mf_au" style="width:auto;margin-right:8px" ${G.auto?'checked':''}>Buka toko otomatis tiap hari</label><div class="mo_s">Tutup otomatis sudah berjalan tiap pukul 20.00. Jika kamu menutup toko manual, buka otomatis berhenti sampai kamu membuka lagi sendiri.</div></div>`;
+  $$('mf_au').onchange=e=>{G.auto=e.target.checked?1:0;save(1)}}}
 })();
 
 rs();if(!loadG()){syncAll();nameModal()}else setTimeout(()=>toast('Data dimuat · '+G.name),400);
