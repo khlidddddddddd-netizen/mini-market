@@ -719,7 +719,7 @@ async function init(){if(X)return X;if(FB.apiKey.indexOf('ISI')==0)throw Error('
 let gate;
 function gmsg(t){const e=$$('mo_gm');if(e)e.textContent=t||''}
 function showGate(note){if(gate)gate.remove();const u=X&&X.auth.currentUser;
- gate=el(`<div class="mo_c"><h2>Mini Market</h2><button class="mo_b mo_f mo_g" id="mo_off">Main Offline (tanpa internet)</button><div class="mo_s">Data disimpan di perangkat ini, terpisah dari data online.</div><hr style="opacity:.2;margin:12px 0"><h3>Main Online (v6)</h3><div id="mo_on"></div><div id="mo_gm" class="mo_s" style="color:#ffb4b4;margin-top:6px">${esc(note||'')}</div></div>`,'mo_w');
+ gate=el(`<div class="mo_c"><h2>Mini Market</h2><button class="mo_b mo_f mo_g" id="mo_off">Main Offline (tanpa internet)</button><div class="mo_s">Data disimpan di perangkat ini, terpisah dari data online.</div><hr style="opacity:.2;margin:12px 0"><h3>Main Online (v8)</h3><div id="mo_on"></div><div id="mo_gm" class="mo_s" style="color:#ffb4b4;margin-top:6px">${esc(note||'')}</div></div>`,'mo_w');
  $$('mo_off').onclick=()=>{MODE='off';gate.remove();gate=null;toast('Mode Offline')};
  const on=$$('mo_on');
  if(u){on.innerHTML=`<button class="mo_b mo_f mo_p" id="mo_go">Lanjut online: ${esc(u.displayName||u.email||'akun')}</button><button class="mo_b mo_f" id="mo_lo">Ganti akun</button>`;$$('mo_go').onclick=startOnline;$$('mo_lo').onclick=async()=>{await X.au.signOut(X.auth);showGate()}}
@@ -816,7 +816,7 @@ init().then(()=>{X.au.onAuthStateChanged(X.auth,()=>{if(gate&&MODE==null)showGat
 const $$=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const spec=()=>!!$$('mo_sp'),mode=()=>window._mo?window._mo().mode:null;
-const EV=[{id:'normal',n:'Hari biasa',m:1,w:.4},{id:'ramai',n:'Hari ramai: pelanggan +50%',m:1.5,w:.2},{id:'hujan',n:'Hujan deras: pelanggan -30%',m:.7,w:.15},{id:'festival',n:'Festival lingkungan: pelanggan +100%',m:2,w:.1},{id:'bonus',n:'Bonus kas dari pemasok',m:1,w:.15,cash:1}];
+const EV=[{id:'normal',n:'Hari biasa',m:1,w:.4},{id:'ramai',n:'Hari ramai: pelanggan +25%',m:1.25,w:.2},{id:'hujan',n:'Hujan deras: pelanggan -30%',m:.7,w:.15},{id:'festival',n:'Festival lingkungan: pelanggan +50%',m:1.5,w:.1},{id:'bonus',n:'Bonus kas dari pemasok',m:1,w:.15,cash:1}];
 const evOf=id=>EV.find(e=>e.id==id)||EV[0];
 window.EVM=1;
 function evTick(){if(spec())return;const m=mode();if(m!='on'&&m!='off')return;
@@ -824,7 +824,7 @@ function evTick(){if(spec())return;const m=mode();if(m!='on'&&m!='off')return;
   G.ev={d:G.day,id:x.id};
   if(x.cash){const c=[25000,75000,250000,1000000][G.lv]||25000;G.M+=c;toast('Event: bonus kas dari pemasok +'+fm(c))}else toast('Event hari ini: '+x.n);
   save(1)}
- window.EVM=evOf(G.ev.id).m}
+ window.EVM=G.evOff?1:evOf(G.ev.id).m}
 const AC=[
 {id:'s1',n:'Pelanggan pertama',t:1,r:10000,c:()=>G.st.served},
 {id:'s2',n:'Mulai ramai (100 pelanggan)',t:100,r:50000,c:()=>G.st.served},
@@ -853,7 +853,7 @@ setInterval(boardPush,60000);setTimeout(boardPush,20000);
 let pn,ti=0;
 const bt=document.createElement('button');bt.textContent='Fitur';bt.style.cssText='position:fixed;right:6px;bottom:6px;z-index:8999;padding:6px 12px;border:0;border-radius:14px;background:#000a;color:#fff;font:12px system-ui';document.body.appendChild(bt);
 bt.onclick=()=>{if(pn)pn.remove();pn=document.createElement('div');pn.className='mo_w';pn.style.zIndex=9997;pn.innerHTML='<div class="mo_c"><div class="mo_r mo_t" id="mf_t"></div><div id="mf_b"></div></div>';document.body.appendChild(pn);tab(ti)};
-function tab(n){ti=n;$$('mf_t').innerHTML=['Peringkat','Pencapaian','Otomatis'].map((x,i)=>`<button class="mo_b ${i==n?'on':''}" data-i="${i}">${x}</button>`).join('')+'<button class="mo_b mo_d" id="mf_x" style="flex:.4">X</button>';
+function tab(n){ti=n;$$('mf_t').innerHTML=['Peringkat','Pencapaian','Otomatis','Mode'].map((x,i)=>`<button class="mo_b ${i==n?'on':''}" data-i="${i}">${x}</button>`).join('')+'<button class="mo_b mo_d" id="mf_x" style="flex:.4">X</button>';
  $$('mf_t').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>tab(+b.dataset.i));$$('mf_x').onclick=()=>{pn.remove();pn=null};
  const b=$$('mf_b');
  if(n==0){const o=window._mo();if(o.mode!='on'){b.innerHTML='<div class="mo_i">Peringkat hanya tersedia di mode Online.</div>';return}
@@ -861,7 +861,9 @@ function tab(n){ti=n;$$('mf_t').innerHTML=['Peringkat','Pencapaian','Otomatis'].
   fs.getDocs(fs.query(fs.collection(db,'board'),fs.orderBy('money','desc'),fs.limit(20))).then(s=>{
    b.innerHTML='<div class="mo_s">Peringkat berdasarkan uang (kekayaan). Diperbarui sekitar tiap 1 menit.</div>'+(s.docs.map((d,i)=>{const v=d.data(),me=d.id==o.me.uid;return`<div class="mo_i" ${me?'style="outline:2px solid #f4a259"':''}><b>${i+1}. ${esc(v.name)}</b>${me?' (kamu)':''}<div class="mo_s">${esc(v.shop)} · ${esc(v.lvName)} · ${fm(v.money)}</div></div>`}).join('')||'<div class="mo_i">Belum ada data.</div>')}).catch(e=>{b.innerHTML='<div class="mo_i">Gagal memuat: '+esc(e.code||e.message)+'</div>'})}
  else if(n==1){G.ach=G.ach||{};b.innerHTML=AC.map(a=>{const c=Math.min(a.c(),a.t),d=!!G.ach[a.id];return`<div class="mo_i" ${d?'style="opacity:.6"':''}><b>${esc(a.n)}</b> ${d?'(selesai)':''}<div class="mo_s">${d?'':fm(c)+' / '+fm(a.t)+' · '}Hadiah ${fm(a.r)}</div></div>`}).join('')}
- else{b.innerHTML=`<div class="mo_i"><b>Event hari ini</b><div class="mo_s">${esc(evOf(G.ev&&G.ev.id).n)}</div></div><div class="mo_i"><label><input type="checkbox" id="mf_au" style="width:auto;margin-right:8px" ${G.auto?'checked':''}>Buka toko otomatis tiap hari</label><div class="mo_s">Tutup otomatis sudah berjalan tiap pukul 20.00. Jika kamu menutup toko manual, buka otomatis berhenti sampai kamu membuka lagi sendiri.</div></div>`;
+ else if(n==3){const m=mode(),on=m=='on';b.innerHTML=`<div class="mo_i"><b>Mode saat ini: ${on?'Online':'Offline'}</b><div class="mo_s">${on?'Data tersimpan di server. Pindah ke Offline memakai data lokal perangkat (terpisah).':'Data tersimpan di perangkat ini. Pindah ke Online memakai data akun (terpisah dari data offline).'}</div></div><button class="mo_b mo_p mo_f" id="mf_sw">${on?'Pindah ke Offline':'Pindah ke Online / login'}</button>`;$$('mf_sw').onclick=()=>{toast('Menyimpan...');save();setTimeout(()=>location.reload(),1500)}}
+ else{b.innerHTML=`<div class="mo_i"><b>Event hari ini</b><div class="mo_s">${esc(evOf(G.ev&&G.ev.id).n)}</div></div><div class="mo_i"><label><input type="checkbox" id="mf_au" style="width:auto;margin-right:8px" ${G.auto?'checked':''}>Buka toko otomatis tiap hari</label><div class="mo_s">Tutup otomatis sudah berjalan tiap pukul 20.00. Jika kamu menutup toko manual, buka otomatis berhenti sampai kamu membuka lagi sendiri.</div></div><div class="mo_i"><label><input type="checkbox" id="mf_ev" style="width:auto;margin-right:8px" ${G.evOff?'':'checked'}>Event boleh mengubah jumlah pelanggan</label><div class="mo_s">Matikan jika game terasa berat atau tampilan bermasalah.</div></div>`;
+  $$('mf_ev').onchange=e=>{G.evOff=e.target.checked?0:1;save(1)};
   $$('mf_au').onchange=e=>{G.auto=e.target.checked?1:0;save(1)}}}
 })();
 
